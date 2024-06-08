@@ -1,0 +1,19 @@
+{
+  "name": "get-users",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\""
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "serverless-dynamodb": "^0.2.53"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1635.0",
+    "serverless": "^3.2.0",
+    "serverless-offline": "^13.6.0"
+  }
+}

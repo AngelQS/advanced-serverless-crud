@@ -1,0 +1,79 @@
+service: crud-serverless-users
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: 'dynamodb:*'
+          Resource: arn:aws:dynamodb:us-east-1:524786384851:table/usersTable
+
+plugins:
+  - serverless-dynamodb
+  - serverless-offline
+
+custom:
+  serverless-dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+
+functions:
+  get-users:
+    handler: getUsers/handler.getUsers
+    package:
+      patterns:
+        - 'getUsers/handler.js'
+    events:
+      - http:
+          path: users/{id}
+          method: GET
+  create-users:
+    handler: createUsers/handler.createUsers
+    package:
+      patterns:
+        - 'createUsers/handler.js'
+    events:
+      - http:
+          path: users
+          method: POST
+  update-users:
+    handler: updateUsers/handler.updateUsers
+    package:
+      patterns:
+        - 'updateUsers/handler.js'
+    events:
+      - http:
+          path: users/{id}
+          method: PATCH
+  delete-users:
+    handler: deleteUsers/handler.deleteUsers
+    runtime: python3.8
+    package:
+      patterns:
+        - 'deleteUsers/handler.py'
+    events:
+      - http:
+          path: users/{id}
+          method: DELETE
+
+resources:
+  Resources:
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: usersTable
+        AttributeDefinitions:
+          - AttributeName: pk
+            AttributeType: S
+        KeySchema:
+          - AttributeName: pk
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1

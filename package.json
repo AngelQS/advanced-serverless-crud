@@ -4,16 +4,22 @@
   "description": "",
   "main": "handler.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\""
+    "test": "echo \"Error: no test specified\"",
+    "deploy": "sls deploy",
+    "start": "sls offline start --reloadHandler"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "serverless-dynamodb": "^0.2.53"
+    "@aws-sdk/client-dynamodb": "^3.602.0",
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@aws-sdk/s3-request-presigner": "^3.600.0",
+    "serverless": "^3.39.0",
+    "serverless-dynamodb": "^0.2.53",
+    "serverless-offline": "^13.6.0"
   },
   "dependencies": {
-    "aws-sdk": "^2.1635.0",
-    "serverless": "^3.2.0",
-    "serverless-offline": "^13.6.0"
+    "rimraf": "^5.0.7",
+    "sharp": "^0.33.4"
   }
 }

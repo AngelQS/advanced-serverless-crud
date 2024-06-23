@@ -1,5 +1,6 @@
-const AWS = require('aws-sdk');
+const { DynamoDBClient, PutItemCommand } = require('@aws-sdk/client-dynamodb');
 const { randomUUID } = require('crypto');
+const { marshallItem, unmarshallItem } = require('../common/dynamodb-utils');
 
 let dynamoDBClientParams = {};
 
@@ -12,7 +13,7 @@ if (process.env.IS_OFFLINE) {
   }
 };
 
-const dynamodb = new AWS.DynamoDB.DocumentClient(dynamoDBClientParams);
+const dynamodbClient = new DynamoDBClient(dynamoDBClientParams);
 
 const createUsers = async (event, context) => {
   console.log('event: ', event);
@@ -21,19 +22,18 @@ const createUsers = async (event, context) => {
   const userBody = JSON.parse(event.body);
   userBody.pk = userId;
   
-  const params = {
+  const input = {
     TableName: 'usersTable',
-    Item: userBody
+    Item: marshallItem(userBody)
   };
+  const command = new PutItemCommand(input);
 
-  console.log('params: ', params);
-
-  const result = await dynamodb.put(params).promise();
-  console.log('result: ', result);
+  const response = await dynamodbClient.send(command);
+  console.log('response: ', response);
   
   return {
-    "statusCode": 200,
-    "body": JSON.stringify({ 'user': params.Item })
+    'statusCode': 200,
+    'body': JSON.stringify({ 'user': unmarshallItem(input.Item) })
   };
 };
 

@@ -4,7 +4,7 @@ const { marshallItem, unmarshallItem } = require('../common/dynamodb-utils');
 let dynamoDBClientParams = {};
 
 if (process.env.IS_OFFLINE) {
-  dynamodbClientParams = {
+  dynamoDBClientParams = {
     region: 'localhost',
     endpoint: 'http://localhost:8000',
     accessKeyId: 'DEFAULT_ACCESS_KEY',

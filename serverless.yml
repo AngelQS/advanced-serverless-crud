@@ -3,6 +3,9 @@ service: crud-serverless-users
 provider:
   name: aws
   runtime: nodejs18.x
+  apiGateway:
+    apiKeys:
+      - crud-serverless-users-apikey
   stage: dev
   region: us-east-1
   # profile: default
@@ -58,6 +61,7 @@ functions:
         - 'src/getUsers/**/*.js'
     events:
       - http:
+          private: true
           path: users/{id}
           method: GET
           request:

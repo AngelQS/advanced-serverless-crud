@@ -73,7 +73,7 @@ constructs:
     type: queue
     batchSize: 1
     worker:
-      handler: src/handler.likeUser
+      handler: src/likeUser/handler.likeUser
       # reservedConcurrency: 20
       package:
         patterns:

@@ -33,12 +33,14 @@ provider:
 
 plugins:
   - serverless-dynamodb
+  - serverless-apigateway-service-proxy
+  - serverless-lift
   - serverless-offline
 
 package:
   individually: true
   patterns:
-    - "!**"
+    - '!**'
 
 custom:
   serverless-dynamodb:
@@ -48,6 +50,39 @@ custom:
       port: 8000
       inMemory: true
       migrate: true
+  apiGatewayServiceProxies:
+    - sqs:
+        path: /likeuser
+        method: post
+        queueName: likequeue #!GetAtt MyQueue.QueueName
+        cors: true
+        response:
+          template:
+            # `success` is used when the integration response is 200
+            success: |-
+              { 'message': 'accepted' }
+            # `clientError` is used then the integration response is 400
+            clientError: |-
+              { 'message': 'there is an error in your request' }
+            # `serverError` is used then the integration response is 500
+            serverError: |-
+              { 'message': 'there was an error handling your request' }
+
+constructs:
+  sqs-queue:
+    type: queue
+    batchSize: 1
+    worker:
+      handler: src/handler.likeUser
+      reservedConcurrency: 1
+      package:
+        patterns:
+          - 'src/common/**/*.js'
+          - 'src/likeUser/**/*.js'
+    extensions:
+      queue:
+        Properties:
+          QueueName: likequeue
 
 functions:
   custom-authorizer:
@@ -62,7 +97,7 @@ functions:
       - { Ref: BaseLambdaLayer }
     package:
       patterns:
-        - "src/common/**/*.js"
+        - 'src/common/**/*.js'
         - 'src/getUsers/**/*.js'
     events:
       - http:
@@ -77,7 +112,7 @@ functions:
     handler: src/createUsers/handler.createUsers
     package:
       patterns:
-        - "src/common/**/*.js"
+        - 'src/common/**/*.js'
         - 'src/createUsers/**/*.js'
     events:
       - http:
@@ -93,7 +128,7 @@ functions:
     handler: src/updateUsers/handler.updateUsers
     package:
       patterns:
-        - "src/common/**/*.js"
+        - 'src/common/**/*.js'
         - 'src/updateUsers/**/*.js'
     events:
       - http:
@@ -110,7 +145,7 @@ functions:
     runtime: python3.8
     package:
       patterns:
-        - "src/common/**/*.js"
+        - 'src/common/**/*.js'
         - 'src/deleteUsers/**/*.js'
     events:
       - http:
@@ -124,7 +159,7 @@ functions:
     handler: src/signedUrl/handler.signedS3URL
     package:
       patterns:
-        - "src/common/**/*.js"
+        - 'src/common/**/*.js'
         - 'src/signedUrl/**/*.js'
     events:
       - http:
@@ -141,7 +176,7 @@ functions:
       - { Ref: BaseLambdaLayer }
     package:
       patterns:
-        - "src/common/**/*.js"
+        - 'src/common/**/*.js'
         - 'src/thumbnail/**/*.js'
     events:
       - s3:

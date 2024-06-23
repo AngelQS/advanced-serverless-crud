@@ -16,6 +16,7 @@
     "@aws-sdk/s3-request-presigner": "^3.600.0",
     "serverless": "^3.39.0",
     "serverless-dynamodb": "^0.2.53",
+    "serverless-lift": "^1.29.0",
     "serverless-offline": "^13.6.0"
   },
   "dependencies": {

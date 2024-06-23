@@ -74,7 +74,7 @@ constructs:
     batchSize: 1
     worker:
       handler: src/handler.likeUser
-      reservedConcurrency: 1
+      reservedConcurrency: 10
       package:
         patterns:
           - 'src/common/**/*.js'

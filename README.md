@@ -16,3 +16,5 @@ aws lambda publish-layer-version --layer-name my-first-layer \
 --zip-file fileb://nodejs-layer.zip \
 --compatible-runtimes nodejs18.x \
 --compatible-architectures x86_64 \
+
+docs: https://docs.aws.amazon.com/lambda/latest/dg/creating-deleting-layers.html

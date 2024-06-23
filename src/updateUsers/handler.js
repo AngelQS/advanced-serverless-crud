@@ -1,4 +1,5 @@
-const AWS = require('aws-sdk');
+const { DynamoDBClient, UpdateItemCommand } = require('@aws-sdk/client-dynamodb');
+const { marshallItem, unmarshallItem } = require('../common/dynamodb-utils');
 
 let dynamoDBClientParams = {};
 
@@ -11,32 +12,34 @@ if (process.env.IS_OFFLINE) {
   }
 };
 
-const dynamodb = new AWS.DynamoDB.DocumentClient(dynamoDBClientParams);
+const dynamodbClient = new DynamoDBClient(dynamoDBClientParams);
 
 const updateUsers = async (event, context) => {
   console.log('event: ', event);
+
   const userId = event.pathParameters.id;
   const userBody = JSON.parse(event.body);
   
-  const params = {
+  const input = {
     TableName: 'usersTable',
-    Key: { pk: userId },
+    Key: marshallItem({ pk: userId }),
     UpdateExpression: 'set #name = :name',
     ExpressionAttributeNames: {
-      '#name': 'name' 
+      '#name': 'name'
     },
-    ExpressionAttributeValues: {
+    ExpressionAttributeValues: marshallItem({
       ':name': userBody.name
-    },
+    }),
     ReturnValues: 'ALL_NEW'
   };
+  const command = new UpdateItemCommand(input);
 
-  const result = await dynamodb.update(params).promise();
-  console.log('result: ', result); 
+  const response = await dynamodbClient.send(command);
+  console.log('response: ', response);
   
   return {
-    "statusCode": 200,
-    "body": JSON.stringify({ 'user': result.Attributes })
+    'statusCode': 200,
+    'body': JSON.stringify({ 'user': unmarshallItem(response.Attributes) })
   };
 };
 

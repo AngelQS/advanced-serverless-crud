@@ -3,16 +3,40 @@ service: crud-serverless-users
 provider:
   name: aws
   runtime: nodejs18.x
+  stage: dev
+  region: us-east-1
+  # profile: default
   iam:
     role:
       statements:
         - Effect: Allow
           Action: 'dynamodb:*'
           Resource: arn:aws:dynamodb:us-east-1:524786384851:table/usersTable
+        - Effect: Allow
+          Action: 's3:*'
+          Resource:
+            - Fn::GetAtt:
+                - S3Bucket
+                - Arn
+            - Fn::Join:
+                - ''
+                - - Fn::GetAtt:
+                      - S3Bucket
+                      - Arn
+                  - '/*'
+
+  environment:
+    BUCKET: advanced-serverless-crud-509373 
 
 plugins:
   - serverless-dynamodb
   - serverless-offline
+
+package:
+  individually: true
+  patterns:
+    - "!**"
+    - "src/common/**/*.js"
 
 custom:
   serverless-dynamodb:
@@ -25,42 +49,98 @@ custom:
 
 functions:
   get-users:
-    handler: getUsers/handler.getUsers
+    handler: src/getUsers/handler.getUsers
+    layers:
+      # - arn:aws:lambda:us-east-1:524786384851:layer:sls-layer:3
+      - { Ref: BaseLambdaLayer }
     package:
       patterns:
-        - 'getUsers/handler.js'
+        - 'src/getUsers/**/*.js'
     events:
       - http:
           path: users/{id}
           method: GET
+          request:
+            parameters:
+              paths:
+                id: true
   create-users:
-    handler: createUsers/handler.createUsers
+    handler: src/createUsers/handler.createUsers
     package:
       patterns:
-        - 'createUsers/handler.js'
+        - 'src/createUsers/**/*.js'
     events:
       - http:
           path: users
           method: POST
+          request:
+            schemas:
+              application/json: ${file(config/serverless/schemas/user-schema.json)}
   update-users:
-    handler: updateUsers/handler.updateUsers
+    handler: src/updateUsers/handler.updateUsers
     package:
       patterns:
-        - 'updateUsers/handler.js'
+        - 'src/updateUsers/**/*.js'
     events:
       - http:
           path: users/{id}
           method: PATCH
+          request:
+            parameters:
+              paths:
+                id: true
+            schemas:
+              application/json: ${file(config/serverless/schemas/user-schema.json)}
   delete-users:
-    handler: deleteUsers/handler.deleteUsers
+    handler: src/deleteUsers/handler.deleteUsers
     runtime: python3.8
     package:
       patterns:
-        - 'deleteUsers/handler.py'
+        - 'src/deleteUsers/**/*.js'
     events:
       - http:
           path: users/{id}
           method: DELETE
+          request:
+            parameters:
+              paths:
+                id: true
+  signedURL:
+    handler: src/signedUrl/handler.signedS3URL
+    package:
+      patterns:
+        - 'src/signedUrl/**/*.js'
+    events:
+      - http:
+          path: signedurl
+          method: GET
+          request:
+            parameters:
+              querystrings:
+                filename: true
+  thumbGenerator:
+    handler: src/thumbnail/handler.thumbnailGenerator
+    layers:
+      # - arn:aws:lambda:us-east-1:524786384851:layer:prod-dependencies:9
+      - { Ref: BaseLambdaLayer }
+    package:
+      patterns:
+        - 'src/thumbnail/**/*.js'
+    events:
+      - s3:
+          bucket: advanced-serverless-crud-509373
+          event: s3:ObjectCreated:*
+          existing: true
+          rules:
+            - prefix: upload/
+
+layers:
+  base:
+    name: 'prod-dependencies'
+    compatibleRuntimes:
+      - 'nodejs18.x'
+    package:
+      artifact: app/nodejs.zip
 
 resources:
   Resources:
@@ -77,3 +157,31 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+    S3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: advanced-serverless-crud-509373
+        # AccessControl: PublicRead
+        OwnershipControls:
+          Rules:
+            - ObjectOwnership: ObjectWriter
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+    SampleBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref S3Bucket
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal: '*'
+              Action: s3:GetObject
+              Resource: !Join
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref S3Bucket
+                  - '/*'

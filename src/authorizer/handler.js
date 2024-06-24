@@ -24,4 +24,4 @@ const authorize = async (event, context) => {
 
 module.exports = {
   authorize
-}
+};

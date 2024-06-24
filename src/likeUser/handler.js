@@ -14,35 +14,34 @@ if (process.env.IS_OFFLINE) {
 
 const dynamodbClient = new DynamoDBClient(dynamoDBClientParams);
 
-const updateUsers = async (event, context) => {
-  console.log('event: ', event);
+const sleep = (ms) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+};
 
-  const userId = event.pathParameters.id;
-  const userBody = JSON.parse(event.body);
-  
+const likeUser = async (event, context) => {
+  console.log('event: ', event);
+  const body = event.Records[0].body;
+  const userId = JSON.parse(body).id;
+  console.log('userId: ', userId);
+
   const input = {
     TableName: 'usersTable',
     Key: marshallItem({ pk: userId }),
-    UpdateExpression: 'set #name = :name',
-    ExpressionAttributeNames: {
-      '#name': 'name'
-    },
+    UpdateExpression: 'ADD likes :inc',
     ExpressionAttributeValues: marshallItem({
-      ':name': userBody.name
+      ':inc': 1
     }),
     ReturnValues: 'ALL_NEW'
   };
   const command = new UpdateItemCommand(input);
 
   const response = await dynamodbClient.send(command);
-  console.log('response: ', response);
-  
-  return {
-    'statusCode': 200,
-    'body': JSON.stringify({ 'user': unmarshallItem(response.Attributes) })
-  };
+  await sleep(4000);
+  console.log('dynamodb response: ', response)
 };
 
 module.exports = {
-  updateUsers
+  likeUser
 };
